@@ -1,0 +1,61 @@
+/* Fuentes autoalojadas (mismas que la landing) */
+@font-face {
+  font-family: "Crimson Pro";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/crimson-pro-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/inter-latin.woff2") format("woff2");
+}
+
+/* Tokens de marca MIR Meal */
+:root {
+  --ink: #141414;
+  --paper: #ffffff;
+  --surface: #fafaf9;
+  --g100: #ececea;
+  --g200: #d9d9d6;
+  --g400: #a3a3a0;
+  --g600: #6b6b68;
+  --entregado: #2f6b4f;
+  --alergeno: #b4791f;
+  --error: #a23b2e;
+  --info: #35566e;
+  --font-display: "Crimson Pro", Georgia, serif;
+  --font-ui: "Inter", system-ui, sans-serif;
+  --radius: 8px;
+  --radius-card: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-ui);
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: inherit;
+}

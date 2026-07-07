@@ -1,0 +1,300 @@
+// MIR Meal — esquema de base de datos
+// PostgreSQL + Prisma. Precios SIEMPRE en céntimos (Int), nunca Float.
+// Nombres en inglés por convención (mejor interoperabilidad con Stripe, Auth.js y el ecosistema).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  KITCHEN
+  DELIVERY
+  CUSTOMER
+}
+
+enum PlanType {
+  SINGLE // plato suelto (a la carta)
+  PACK_5 // pack semanal de 5 platos
+  MONTHLY // suscripción mensual (5/semana)
+}
+
+enum OrderStatus {
+  PENDING // pendiente
+  PREPARING // en preparación
+  SHIPPED // enviado / en reparto
+  DELIVERED // entregado
+  CANCELLED // cancelado
+  INCIDENT // incidencia (no entregado, etc.)
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────────────────────
+// Usuarios, direcciones y zonas de reparto
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  role         Role     @default(CUSTOMER)
+  passwordHash String?  // hash bcrypt (login email + contraseña)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses     Address[]
+  orders        Order[]
+  subscriptions Subscription[]
+
+  // Auth.js
+  accounts Account[]
+  sessions Session[]
+}
+
+model Address {
+  id           String  @id @default(cuid())
+  userId       String
+  label        String? // "Casa", "Facultad"...
+  street       String
+  city         String
+  postalCode   String
+  notes        String? // indicaciones para el repartidor
+  isDefault    Boolean @default(false)
+  zoneId       String?
+
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zone   DeliveryZone? @relation(fields: [zoneId], references: [id])
+  orders Order[]
+
+  @@index([userId])
+  @@index([postalCode])
+}
+
+model DeliveryZone {
+  id          String   @id @default(cuid())
+  name        String // "Barcelona centro", "Baix Llobregat"...
+  postalCodes String[] // códigos postales cubiertos
+  active      Boolean  @default(true)
+
+  addresses Address[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// Catálogo de platos y alérgenos
+// ─────────────────────────────────────────────────────────────
+
+model Dish {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  priceCents  Int // precio base a la carta
+  imageUrl    String? // foto (subida desde el panel, mostrada en el frontend)
+  active      Boolean @default(true)
+
+  // Información nutricional
+  kcal      Int?
+  proteinG  Int?
+  carbsG    Int?
+  fatG      Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  allergens  Allergen[]  @relation("DishAllergens")
+  menuItems  MenuItem[]
+}
+
+model Allergen {
+  id    String @id @default(cuid())
+  name  String @unique // "Gluten", "Lácteos"...
+  code  String @unique // identificador de los 14 de declaración obligatoria (UE 1169/2011)
+
+  dishes Dish[] @relation("DishAllergens")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Menú semanal y capacidad
+// ─────────────────────────────────────────────────────────────
+
+model WeeklyMenu {
+  id        String   @id @default(cuid())
+  weekStart DateTime @db.Date // lunes de la semana
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items MenuItem[]
+
+  @@unique([weekStart])
+}
+
+model MenuItem {
+  id                 String @id @default(cuid())
+  weeklyMenuId       String
+  dishId             String
+  capacity           Int    @default(0) // unidades que puede cocinar la cocina esa semana
+  sold               Int    @default(0) // vendidas hasta ahora (sold <= capacity)
+  priceCentsOverride Int? // precio especial de esa semana, si aplica
+
+  weeklyMenu WeeklyMenu  @relation(fields: [weeklyMenuId], references: [id], onDelete: Cascade)
+  dish       Dish        @relation(fields: [dishId], references: [id])
+  orderItems OrderItem[]
+
+  @@unique([weeklyMenuId, dishId])
+  @@index([dishId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Planes de precio (las 3 formas de compra)
+// ─────────────────────────────────────────────────────────────
+
+model PricingPlan {
+  id            String   @id @default(cuid())
+  type          PlanType @unique
+  name          String
+  dishesCount   Int // 1, 5, o 5/semana
+  priceCents    Int
+  stripePriceId String? // id del precio en Stripe
+  recurring     Boolean  @default(false)
+  active        Boolean  @default(true)
+
+  orders        Order[]
+  subscriptions Subscription[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// Suscripciones (generan pedidos, no reparten por sí solas)
+// ─────────────────────────────────────────────────────────────
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  planId               String
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeSubscriptionId String?            @unique
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan   PricingPlan @relation(fields: [planId], references: [id])
+  orders Order[]
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Pedidos y líneas de pedido
+// ─────────────────────────────────────────────────────────────
+
+model Order {
+  id             String      @id @default(cuid())
+  userId         String
+  addressId      String
+  planId         String?
+  subscriptionId String? // si nace de una suscripción
+  status         OrderStatus @default(PENDING)
+  deliveryDate   DateTime    @db.Date // calculada por la regla de ventanas (dom–mié → vie; jue–sáb → lun)
+  isManual       Boolean     @default(false) // pedido creado a mano desde el panel
+
+  subtotalCents Int
+  taxCents      Int
+  totalCents    Int
+
+  stripePaymentIntentId String?
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  address      Address       @relation(fields: [addressId], references: [id])
+  plan         PricingPlan?  @relation(fields: [planId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  items        OrderItem[]
+
+  @@index([status])
+  @@index([deliveryDate])
+  @@index([userId])
+}
+
+model OrderItem {
+  id             String @id @default(cuid())
+  orderId        String
+  menuItemId     String // referencia al plato-en-una-semana (permite trazar capacidad y precio histórico)
+  quantity       Int    @default(1)
+  unitPriceCents Int
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@index([orderId])
+  @@index([menuItemId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Lista de espera (formulario de la landing)
+// ─────────────────────────────────────────────────────────────
+
+model WaitlistEntry {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  postalCode String?
+  createdAt  DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────
+// Auth.js (modelos estándar del adaptador Prisma)
+// ─────────────────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

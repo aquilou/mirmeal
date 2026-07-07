@@ -1,0 +1,21 @@
+# dependencias
+/node_modules
+
+# next
+/.next
+/out
+
+# produccion
+/build
+
+# entorno — NUNCA subir secretos
+.env
+.env*.local
+
+# prisma
+/prisma/*.db
+
+# sistema
+.DS_Store
+*.pem
+npm-debug.log*
