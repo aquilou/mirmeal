@@ -33,8 +33,8 @@ export const authConfig = {
     },
     session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
+        session.user.id = String(token.id);
+        session.user.role = token.role as "ADMIN" | "KITCHEN" | "DELIVERY" | "CUSTOMER";
       }
       return session;
     },
