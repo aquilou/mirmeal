@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 
 const items = [
   { href: "/admin", label: "Panel" },
+  { href: "/admin/menu", label: "Menú semanal" },
   { href: "/admin/platos", label: "Platos" },
 ];
 
-const upcoming = ["Menú semanal", "Pedidos", "Clientes", "Comunicaciones"];
+const upcoming = ["Pedidos", "Clientes", "Comunicaciones"];
 
 export function AdminNav() {
   const path = usePathname();
