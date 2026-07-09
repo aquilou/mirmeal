@@ -232,6 +232,7 @@ model Order {
   @@index([status])
   @@index([deliveryDate])
   @@index([userId])
+  @@index([stripePaymentIntentId])
 }
 
 model OrderItem {
