@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider, CartBar } from "@/components/cart";
+import { PackSelectionProvider, PackBar } from "@/components/pack-selection";
 
 export const metadata: Metadata = {
   title: "MIR Meal",
@@ -16,8 +17,11 @@ export default function RootLayout({
     <html lang="es">
       <body>
         <CartProvider>
-          {children}
-          <CartBar />
+          <PackSelectionProvider>
+            {children}
+            <CartBar />
+            <PackBar />
+          </PackSelectionProvider>
         </CartProvider>
       </body>
     </html>

@@ -1,37 +1,17 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { mondayOf, weekLabel } from "@/lib/week";
+import { weekLabel } from "@/lib/week";
 import { formatEuros } from "@/lib/format";
 import { AddButton } from "@/components/cart";
+import { getCurrentWeeklyMenu } from "@/lib/menu-query";
 
 export const dynamic = "force-dynamic";
 
-async function getCurrentMenu() {
-  const thisMonday = mondayOf(new Date());
-  const include = {
-    items: {
-      where: { capacity: { gt: 0 } },
-      include: { dish: { include: { allergens: true } } },
-    },
-  } as const;
-
-  // La próxima semana publicada; si no hay, la última publicada.
-  return (
-    (await prisma.weeklyMenu.findFirst({
-      where: { published: true, weekStart: { gte: thisMonday } },
-      orderBy: { weekStart: "asc" },
-      include,
-    })) ??
-    (await prisma.weeklyMenu.findFirst({
-      where: { published: true },
-      orderBy: { weekStart: "desc" },
-      include,
-    }))
-  );
-}
-
 export default async function MenuPage() {
-  const menu = await getCurrentMenu();
+  const [menu, packPlan] = await Promise.all([
+    getCurrentWeeklyMenu(),
+    prisma.pricingPlan.findUnique({ where: { type: "PACK_5" } }),
+  ]);
 
   return (
     <div>
@@ -61,8 +41,27 @@ export default async function MenuPage() {
       <main style={{ maxWidth: 1080, margin: "0 auto", padding: "40px 24px 90px" }}>
         <h1 style={{ fontSize: "clamp(30px,4vw,44px)", marginBottom: 6 }}>El menú de esta semana</h1>
         {menu ? (
-          <p style={{ color: "var(--g600)", marginBottom: 32 }}>{weekLabel(menu.weekStart)}</p>
+          <p style={{ color: "var(--g600)", marginBottom: 20 }}>{weekLabel(menu.weekStart)}</p>
         ) : null}
+
+        {packPlan?.active && (
+          <Link
+            href="/pack"
+            style={{
+              display: "block",
+              background: "var(--surface)",
+              border: "1px solid var(--g100)",
+              borderRadius: 12,
+              padding: "14px 18px",
+              marginBottom: 28,
+              textDecoration: "none",
+              color: "var(--ink)",
+              fontSize: 14.5,
+            }}
+          >
+            ¿Prefieres ahorrar? Elige el <strong>pack semanal de 5 platos</strong> por {formatEuros(packPlan.priceCents)} →
+          </Link>
+        )}
 
         {!menu || menu.items.length === 0 ? (
           <p style={{ color: "var(--g600)" }}>

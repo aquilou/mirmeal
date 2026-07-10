@@ -127,7 +127,8 @@ export function CartBar() {
     path.startsWith("/admin") ||
     path.startsWith("/login") ||
     path.startsWith("/register") ||
-    path.startsWith("/carrito");
+    path.startsWith("/carrito") ||
+    path.startsWith("/pack");
 
   if (count === 0 || hidden) return null;
 

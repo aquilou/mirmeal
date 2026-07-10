@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { formatEuros } from "@/lib/format";
 import { ClearCartOnMount } from "../clear-cart-on-mount";
+import { ClearPackSelectionOnMount } from "@/components/pack-selection";
 
 export const dynamic = "force-dynamic";
 
@@ -31,10 +32,11 @@ export default async function CheckoutSuccessPage({
   }
 
   const confirmed = order.status !== "PENDING";
+  const isPack = order.planId !== null;
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "60px 24px 90px", textAlign: "center" }}>
-      <ClearCartOnMount />
+      {isPack ? <ClearPackSelectionOnMount /> : <ClearCartOnMount />}
       <h1 style={{ fontSize: 30, marginBottom: 14 }}>
         {confirmed ? "¡Pedido confirmado!" : "Confirmando tu pago…"}
       </h1>
@@ -50,8 +52,8 @@ export default async function CheckoutSuccessPage({
             key={it.id}
             style={{ display: "flex", justifyContent: "space-between", padding: "12px 16px", borderTop: i === 0 ? "none" : "1px solid var(--g100)", fontSize: 14.5 }}
           >
-            <span>{it.quantity}× {it.menuItem.dish.name}</span>
-            <span>{formatEuros(it.unitPriceCents * it.quantity)}</span>
+            <span>{isPack ? it.menuItem.dish.name : `${it.quantity}× ${it.menuItem.dish.name}`}</span>
+            {!isPack && <span>{formatEuros(it.unitPriceCents * it.quantity)}</span>}
           </div>
         ))}
       </div>

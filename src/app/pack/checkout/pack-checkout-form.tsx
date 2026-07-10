@@ -2,9 +2,9 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { useCart } from "@/components/cart";
+import { usePackSelection, PACK_SIZE } from "@/components/pack-selection";
 import { formatEuros } from "@/lib/format";
-import { startCheckout, type CheckoutState } from "@/lib/orders";
+import { startPackCheckout, type CheckoutState } from "@/lib/orders";
 import { AddressFields } from "@/components/address-fields";
 
 type AddressOption = {
@@ -28,24 +28,32 @@ function formatDeliveryDate(iso: string): string {
   }).format(date);
 }
 
-export function CheckoutForm({
+export function PackCheckoutForm({
   addresses,
   deliveryDate,
   cancelled,
+  planName,
+  planPriceCents,
+  planAvailable,
 }: {
   addresses: AddressOption[];
   deliveryDate: string;
   cancelled: boolean;
+  planName: string;
+  planPriceCents: number;
+  planAvailable: boolean;
 }) {
-  const { items, subtotalCents } = useCart();
-  const [state, formAction, pending] = useActionState(startCheckout, initialState);
+  const { items } = usePackSelection();
+  const [state, formAction, pending] = useActionState(startPackCheckout, initialState);
 
-  if (items.length === 0) {
+  if (!planAvailable || items.length !== PACK_SIZE) {
     return (
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "60px 24px", textAlign: "center" }}>
-        <p style={{ color: "var(--g600)", marginBottom: 16 }}>Tu pedido está vacío.</p>
-        <Link href="/menu" style={{ textDecoration: "underline", color: "var(--ink)" }}>
-          Ver el menú
+        <p style={{ color: "var(--g600)", marginBottom: 16 }}>
+          {!planAvailable ? "El pack semanal no está disponible ahora mismo." : "Aún no has elegido tus 5 platos."}
+        </p>
+        <Link href="/pack" style={{ textDecoration: "underline", color: "var(--ink)" }}>
+          Ir a elegir platos
         </Link>
       </div>
     );
@@ -53,34 +61,33 @@ export function CheckoutForm({
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "36px 24px 90px" }}>
-      <Link href="/carrito" style={{ fontSize: 13.5, color: "var(--g600)", textDecoration: "none" }}>
-        ← Volver al pedido
+      <Link href="/pack" style={{ fontSize: 13.5, color: "var(--g600)", textDecoration: "none" }}>
+        ← Volver a elegir platos
       </Link>
-      <h1 style={{ fontSize: 32, margin: "12px 0 24px" }}>Checkout</h1>
+      <h1 style={{ fontSize: 32, margin: "12px 0 24px" }}>Checkout del pack</h1>
 
       {cancelled && (
         <p style={banner}>Pago cancelado. Puedes intentarlo de nuevo cuando quieras.</p>
       )}
 
       <form action={formAction}>
-        <input type="hidden" name="cartItems" value={JSON.stringify(items.map(({ menuItemId, quantity }) => ({ menuItemId, quantity })))} />
+        <input type="hidden" name="menuItemIds" value={JSON.stringify(items.map((i) => i.menuItemId))} />
 
         <section style={{ marginBottom: 28 }}>
-          <h2 style={sectionTitle}>Tu pedido</h2>
+          <h2 style={sectionTitle}>{planName}</h2>
           <div style={{ border: "1px solid var(--g100)", borderRadius: 12, overflow: "hidden" }}>
             {items.map((it, i) => (
               <div
                 key={it.menuItemId}
-                style={{ display: "flex", justifyContent: "space-between", padding: "12px 16px", borderTop: i === 0 ? "none" : "1px solid var(--g100)", fontSize: 14.5 }}
+                style={{ padding: "12px 16px", borderTop: i === 0 ? "none" : "1px solid var(--g100)", fontSize: 14.5 }}
               >
-                <span>{it.quantity}× {it.name}</span>
-                <span>{formatEuros(it.priceCents * it.quantity)}</span>
+                {it.name}
               </div>
             ))}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 14 }}>
             <span style={{ fontSize: 15, color: "var(--g600)" }}>Total</span>
-            <span style={{ fontFamily: "var(--font-display)", fontSize: 22 }}>{formatEuros(subtotalCents)}</span>
+            <span style={{ fontFamily: "var(--font-display)", fontSize: 22 }}>{formatEuros(planPriceCents)}</span>
           </div>
           <p style={{ fontSize: 13, color: "var(--g600)", marginTop: 8 }}>
             Entrega prevista: {formatDeliveryDate(deliveryDate)}.

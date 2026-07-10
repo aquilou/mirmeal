@@ -7,6 +7,7 @@ const items = [
   { href: "/admin", label: "Panel" },
   { href: "/admin/menu", label: "Menú semanal" },
   { href: "/admin/platos", label: "Platos" },
+  { href: "/admin/planes", label: "Planes" },
 ];
 
 const upcoming = ["Pedidos", "Clientes", "Comunicaciones"];
