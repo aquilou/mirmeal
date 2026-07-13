@@ -3,6 +3,10 @@ import type { NextAuthConfig } from "next-auth";
 // Configuración segura para el edge (middleware): sin Prisma ni bcrypt.
 // El proveedor Credentials (que sí los usa) se añade en `auth.ts`.
 export const authConfig = {
+  // Necesario para servir la app en varios dominios (panel en Railway, compra en
+  // app.mirmeal.es): sin esto, Auth.js puede construir URLs absolutas con el host
+  // interno del contenedor en vez del dominio real por el que llegó la petición.
+  trustHost: true,
   pages: {
     signIn: "/login",
   },
