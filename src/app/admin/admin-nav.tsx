@@ -8,9 +8,11 @@ const items = [
   { href: "/admin/menu", label: "Menú semanal" },
   { href: "/admin/platos", label: "Platos" },
   { href: "/admin/planes", label: "Planes" },
+  { href: "/admin/pedidos", label: "Pedidos" },
+  { href: "/admin/clientes", label: "Clientes" },
 ];
 
-const upcoming = ["Pedidos", "Clientes", "Comunicaciones"];
+const upcoming = ["Comunicaciones"];
 
 export function AdminNav() {
   const path = usePathname();
