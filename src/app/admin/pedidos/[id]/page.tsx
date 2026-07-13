@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatEuros } from "@/lib/format";
-import { ORDER_STATUSES, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/lib/order-status";
-import { updateOrderStatus } from "@/lib/order-admin";
+import { ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/lib/order-status";
+import { StatusForm } from "./status-form";
 
 export const dynamic = "force-dynamic";
 
@@ -104,38 +104,10 @@ export default async function PedidoDetailPage({ params }: { params: Promise<{ i
 
       <section>
         <h2 style={sectionTitle}>Cambiar estado</h2>
-        <form action={updateOrderStatus} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <input type="hidden" name="id" value={order.id} />
-          <select name="status" defaultValue={order.status} style={select}>
-            {ORDER_STATUSES.map((s) => (
-              <option key={s} value={s}>{ORDER_STATUS_LABEL[s]}</option>
-            ))}
-          </select>
-          <button type="submit" style={saveBtn}>Guardar</button>
-        </form>
+        <StatusForm orderId={order.id} currentStatus={order.status} />
       </section>
     </div>
   );
 }
 
 const sectionTitle: React.CSSProperties = { fontSize: 16, fontWeight: 500, marginBottom: 10 };
-const select: React.CSSProperties = {
-  height: 42,
-  padding: "0 12px",
-  fontSize: 14.5,
-  border: "1px solid var(--g200)",
-  borderRadius: 8,
-  fontFamily: "inherit",
-};
-const saveBtn: React.CSSProperties = {
-  height: 42,
-  padding: "0 18px",
-  background: "var(--ink)",
-  color: "var(--paper)",
-  border: "none",
-  borderRadius: 8,
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};

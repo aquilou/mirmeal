@@ -9,8 +9,13 @@ import { computeDeliveryDate } from "@/lib/delivery";
 import { ORDER_STATUSES } from "@/lib/order-status";
 import { CheckoutError, parseCartItems, resolveOrderLines, resolveOrCreateAddress } from "@/lib/checkout-shared";
 
+export type UpdateStatusState = { updatedAt?: number };
+
 /** Cambia el estado de un pedido. Si pasa a CANCELLED y ya se había contado el cupo, lo libera. */
-export async function updateOrderStatus(formData: FormData) {
+export async function updateOrderStatus(
+  _prevState: UpdateStatusState,
+  formData: FormData
+): Promise<UpdateStatusState> {
   await requireAdmin();
   const id = String(formData.get("id"));
   const statusRaw = String(formData.get("status"));
@@ -35,6 +40,7 @@ export async function updateOrderStatus(formData: FormData) {
 
   revalidatePath("/admin/pedidos");
   revalidatePath(`/admin/pedidos/${id}`);
+  return { updatedAt: Date.now() };
 }
 
 export type ManualOrderState = { error?: string };
