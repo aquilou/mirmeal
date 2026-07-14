@@ -89,10 +89,7 @@ export default async function Home() {
             </div>
             <p className={styles.heroNote}>Sin permanencia · Reparto a domicilio en Barcelona y Cataluña · Cancela cuando quieras</p>
           </div>
-          <div className={styles.heroVisual}>
-            <Logo />
-            <span>Foto · pack de la semana</span>
-          </div>
+          <div className={styles.heroVisual} style={{ backgroundImage: "url(/hero-tuppers.jpg)" }} />
         </section>
 
         <section className={styles.wrap}>
