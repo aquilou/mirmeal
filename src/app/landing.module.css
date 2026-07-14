@@ -59,7 +59,9 @@
 
 /* menu */
 .menuGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
-.dish { background: var(--paper); border: 1px solid var(--g100); border-radius: var(--radius-card); padding: 18px 18px 16px; display: flex; flex-direction: column; min-height: 184px; }
+.dish { background: var(--paper); border: 1px solid var(--g100); border-radius: var(--radius-card); overflow: hidden; display: flex; flex-direction: column; }
+.dishImage { aspect-ratio: 4/3; background: var(--surface) center / cover no-repeat; }
+.dishBody { padding: 16px 18px 16px; display: flex; flex-direction: column; flex: 1; min-height: 140px; }
 .dishName { font-size: 19px; line-height: 1.12; margin-bottom: 6px; }
 .dishMacros { font-size: 13.5px; color: var(--g600); margin-bottom: 12px; }
 .dishAlg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }

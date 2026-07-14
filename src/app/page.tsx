@@ -144,25 +144,31 @@ export default async function Home() {
                   const price = it.priceCentsOverride ?? it.dish.priceCents;
                   return (
                     <article className={styles.dish} key={it.id}>
-                      <h3 className={styles.dishName}>{it.dish.name}</h3>
-                      {(it.dish.kcal || it.dish.proteinG) && (
-                        <p className={styles.dishMacros}>
-                          {it.dish.kcal ? `${it.dish.kcal} kcal` : ""}
-                          {it.dish.kcal && it.dish.proteinG ? " · " : ""}
-                          {it.dish.proteinG ? `${it.dish.proteinG} g proteína` : ""}
-                        </p>
-                      )}
-                      <div className={styles.dishAlg}>
-                        {it.dish.allergens.length > 0 ? (
-                          it.dish.allergens.map((a) => (
-                            <span key={a.id} className={`${styles.chip} ${styles.chipAlg}`}>{a.name}</span>
-                          ))
-                        ) : (
-                          <span className={`${styles.chip} ${styles.chipOk}`}>Sin alérgenos declarados</span>
+                      <div
+                        className={styles.dishImage}
+                        style={it.dish.imageUrl ? { backgroundImage: `url(${it.dish.imageUrl})` } : undefined}
+                      />
+                      <div className={styles.dishBody}>
+                        <h3 className={styles.dishName}>{it.dish.name}</h3>
+                        {(it.dish.kcal || it.dish.proteinG) && (
+                          <p className={styles.dishMacros}>
+                            {it.dish.kcal ? `${it.dish.kcal} kcal` : ""}
+                            {it.dish.kcal && it.dish.proteinG ? " · " : ""}
+                            {it.dish.proteinG ? `${it.dish.proteinG} g proteína` : ""}
+                          </p>
                         )}
-                      </div>
-                      <div className={styles.dishFoot}>
-                        <span className={styles.dishPrice}>{formatEuros(price)}</span>
+                        <div className={styles.dishAlg}>
+                          {it.dish.allergens.length > 0 ? (
+                            it.dish.allergens.map((a) => (
+                              <span key={a.id} className={`${styles.chip} ${styles.chipAlg}`}>{a.name}</span>
+                            ))
+                          ) : (
+                            <span className={`${styles.chip} ${styles.chipOk}`}>Sin alérgenos declarados</span>
+                          )}
+                        </div>
+                        <div className={styles.dishFoot}>
+                          <span className={styles.dishPrice}>{formatEuros(price)}</span>
+                        </div>
                       </div>
                     </article>
                   );
